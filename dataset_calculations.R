@@ -15,13 +15,29 @@ global_indicators <- function(
     df,
     weight_var,
     pop_group_var,
-    gender_var
+    gender_var,
+    admin1_pcode_var = NULL
 ) {
 
 # Standardize weight column
 
 df <- df %>%
   mutate(weight = .data[[weight_var]])
+
+# Recode admin1 var
+
+if (!is.null(admin1_pcode_var) &&
+    admin1_pcode_var %in% names(df)) {
+
+  df <- df %>%
+    mutate(admin1_pcode = .data[[admin1_pcode_var]])
+
+} else {
+
+  df <- df %>%
+    mutate(admin1_pcode = NA_character_)
+
+}
 
 # Leading sector in need
 
@@ -248,13 +264,46 @@ if (!is.null(gender_var) &&
   gender <- NULL
 
 }
+  
+  # Admin-1
 
+if (!is.null(admin1_pcode_var) &&
+    admin1_pcode_var %in% names(df)) {
+
+  admin1 <- df %>%
+    filter(
+      !is.na(admin1_pcode),
+      !is.na(msni_in_severe_need)
+    ) %>%
+    group_by(admin1_pcode) %>%
+    summarise(
+      pct_msni_severe = round(
+        100 * weighted.mean(
+          msni_in_severe_need,
+          weight,
+          na.rm = TRUE
+        ),
+        1
+      ),
+      .groups = "drop"
+    ) %>%
+    arrange(desc(pct_msni_severe))
+
+} else {
+
+  admin1 <- NULL
+
+}
+
+  # Put analyses in the results object list
+  
 list(
   summary = summary_stats,
   needs_profile = needs_profile,
   severe_profile = severe_profile,
   pop_group = pop_group,
-  gender = gender
+  gender = gender,
+  admin1 = admin1
 )
 
 }
@@ -280,42 +329,48 @@ configs <- list(
     data = datasets$car,
     weight_var = "weights",
     pop_group_var = "pop_group",
-    gender_var = "hoh_gender_final"
+    gender_var = "hoh_gender_final",
+    admin1_pcode_var = "admin1"
   ),
 
   CMR = list(
     data = datasets$cmr,
     weight_var = "weight_admin2",
     pop_group_var = "PoI",
-    gender_var = "hoh_gender_final"
+    gender_var = "hoh_gender_final",
+    admin1_pcode_var = "Admin_1"
   ),
 
   NER = list(
     data = datasets$ner,
     weight_var = "weights",
     pop_group_var = "PoI",
-    gender_var = "hoh_gender_final"
+    gender_var = "hoh_gender_final",
+    admin1_pcode_var = "Admin_1"
   ),
 
   MMR = list(
     data = datasets$mmr,
     weight_var = "weight_final",
     pop_group_var = "pop_group",
-    gender_var = "hoh_gender_final"
+    gender_var = "hoh_gender_final",
+    admin1_pcode_var = NULL # Not in the data
   ),
 
   HTI = list(
-  data = datasets$hti,
-  weight_var = "weight",
-  pop_group_var = "pop_group",
-  gender_var = "hoh_gender"
+    data = datasets$hti,
+    weight_var = "weight",
+    pop_group_var = "pop_group",
+    gender_var = "hoh_gender",
+    admin1_pcode_var = "admin1"
 ),
 
-MLI = list(
-  data = datasets$mli,
-  weight_var = "weights",
-  pop_group_var = "PoI",
-  gender_var = "hoh_gender"
+  MLI = list(
+    data = datasets$mli,
+    weight_var = "weights",
+    pop_group_var = "PoI",
+    gender_var = "hoh_gender",
+    admin1_pcode_var = "Admin_1"
 )
 )
 
@@ -328,7 +383,8 @@ results <- setNames(
       df = x$data,
       weight_var = x$weight_var,
       pop_group_var = x$pop_group_var,
-      gender_var = x$gender_var
+      gender_var = x$gender_var,
+      admin1_pcode_var = x$admin1_pcode_var
     )
 
   }),
@@ -347,5 +403,6 @@ summary_table <- bind_rows(
 ) %>%
   select(country, everything())
 
-  summary_table |> 
-    write.csv(summary_table, "C:/Users/MarioFIDALGO/ACTED/IMPACT HQ-Progs Res Comms - Documents/RS Unit/4- Programs/1- MSNA/3- R&D/Cross-crisis/08. X crisis 26/msni_global_indicators.csv")
+  summary_table 
+
+  # write.csv(summary_table, "C:/Users/MarioFIDALGO/ACTED/IMPACT HQ-Progs Res Comms - Documents/RS Unit/4- Programs/1- MSNA/3- R&D/Cross-crisis/08. X crisis 26/msni_global_indicators.csv")
