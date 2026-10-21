@@ -1,0 +1,23 @@
+# Other output folders (not needed)
+analysis_tables/
+msni_frameworks/
+scripts/
+ToRs/
+viz/
+mapping/
+
+# Files
+
+# Survey data files
+*MSNA_2026_CrossCrisis_V0.pptx
+*MSNI_2026_GlobalResults.xlsx
+*PainPoints.docx
+
+# R session files
+.Rhistory
+.RData
+.Rproj.user/
+
+# OS files
+Thumbs.db
+.DS_Store
