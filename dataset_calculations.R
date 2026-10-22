@@ -9,6 +9,18 @@ setwd("C:/Users/MarioFIDALGO/ACTED/IMPACT HQ-Progs Res Comms - Documents/RS Unit
 library(dplyr)
 library(openxlsx)
 
+# Store data as list
+
+datasets <- list(
+  car = read.xlsx("CAR2602.xlsx"),
+  cmr = read.xlsx("CMR2601.xlsx", sheet = "main_dataset"),
+  ner = read.xlsx("NER2601.xlsx", sheet = "main_dataset"),
+  mmr = read.xlsx("MMR2602.xlsx", sheet = "msni_main"),
+  hti = read.xlsx("HTI2601.xlsx", sheet = "hh_clean_data"),
+  mli = read.xlsx("MLI2601.xlsx", sheet = "main_dataset"),
+  ven = read.xlsx("VEN2601_unvalidated.xlsx", sheet = "hh_indicadores")
+)
+
 ## Function to iterate over list of countries
 
 global_indicators <- function(
@@ -310,17 +322,6 @@ list(
   
 ## Apply the function
 
-# Store data as list
-
-datasets <- list(
-  car = read.xlsx("CAR2602.xlsx"),
-  cmr = read.xlsx("CMR2601.xlsx", sheet = "main_dataset"),
-  ner = read.xlsx("NER2601.xlsx", sheet = "main_dataset"),
-  mmr = read.xlsx("MMR2602.xlsx", sheet = "msni_main"),
-  hti = read.xlsx("HTI2601.xlsx", sheet = "hh_clean_data"),
-  mli = read.xlsx("MLI2601.xlsx", sheet = "main_dataset")
-)
-
 # Country-specific var names
 
 configs <- list(
@@ -371,6 +372,14 @@ configs <- list(
     pop_group_var = "PoI",
     gender_var = "hoh_gender",
     admin1_pcode_var = "Admin_1"
+),
+
+  VEN = list(
+    data = datasets$ven,
+    weight_var = "weight",
+    pop_group_var = "pop_group",
+    gender_var = "hoh_gender",
+    admin1_pcode_var = "admin1"
 )
 )
 
