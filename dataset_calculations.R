@@ -218,6 +218,56 @@ if (length(severe_sector_props) == 0 || all(is.na(severe_sector_props))) {
     ) %>%
     arrange(desc(weighted_pct))
 
+  # Score distributions
+
+  score_vars <- names(df)[grepl("score", names(df), ignore.case = TRUE)]
+
+  score_distributions <- NULL
+
+  if (length(score_vars) > 0) {
+
+    score_distributions <- lapply(score_vars, function(v) {
+
+      temp <- df %>%
+        filter(!is.na(.data[[v]])) %>%
+        mutate(
+          score = as.numeric(as.character(.data[[v]]))
+        ) %>%
+        group_by(score) %>%
+        summarise(
+          weighted_n = sum(weight, na.rm = TRUE),
+          .groups = "drop"
+        )
+
+      temp <- merge(
+        data.frame(score = 1:5),
+        temp,
+        by = "score",
+        all.x = TRUE
+      )
+
+      temp$weighted_n[is.na(temp$weighted_n)] <- 0
+
+      temp %>%
+        mutate(
+          weighted_pct = round(
+            100 * weighted_n / sum(weighted_n),
+            1
+          ),
+          variable = v
+        ) %>%
+        select(
+          variable,
+          score,
+          weighted_n,
+          weighted_pct
+        )
+
+    }) %>%
+      bind_rows()
+
+  }
+  
   # Population group
 
   if (!is.null(pop_group_var) &&
@@ -314,6 +364,7 @@ list(
   summary = summary_stats,
   needs_profile = needs_profile,
   severe_profile = severe_profile,
+  score_distributions = score_distributions,
   pop_group = pop_group,
   gender = gender,
   admin1 = admin1
