@@ -18,7 +18,8 @@ datasets <- list(
   mmr = read.xlsx("MMR2602.xlsx", sheet = "msni_main"),
   hti = read.xlsx("HTI2601.xlsx", sheet = "hh_clean_data"),
   mli = read.xlsx("MLI2601.xlsx", sheet = "main_dataset"),
-  ven = read.xlsx("VEN2601_unvalidated.xlsx", sheet = "hh_indicadores")
+  ven = read.xlsx("VEN2601_unvalidated.xlsx", sheet = "hh_indicadores"),
+  ukr = read.xlsx("UKR2609.xlsx", sheet = "main")
 )
 
 ## Function to iterate over list of countries
@@ -380,7 +381,16 @@ configs <- list(
     pop_group_var = "pop_group",
     gender_var = "hoh_gender",
     admin1_pcode_var = "admin1"
+),
+
+  UKR = list(
+    data = datasets$ukr,
+    weight_var = "weight",
+    pop_group_var = NULL,
+    gender_var = "hoh_gender",
+    admin1_pcode_var = "admin1_pcode"
 )
+
 )
 
 # Run
