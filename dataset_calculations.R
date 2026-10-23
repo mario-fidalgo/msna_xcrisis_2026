@@ -220,54 +220,87 @@ if (length(severe_sector_props) == 0 || all(is.na(severe_sector_props))) {
 
   # Score distributions
 
-  score_vars <- names(df)[grepl("score", names(df), ignore.case = TRUE)]
+  # Score distributions
 
-  score_distributions <- NULL
+score_vars <- names(df)[grepl("score", names(df), ignore.case = TRUE)]
 
-  if (length(score_vars) > 0) {
+score_distributions <- NULL
 
-    score_distributions <- lapply(score_vars, function(v) {
+if (length(score_vars) > 0) {
 
-      temp <- df %>%
-        filter(!is.na(.data[[v]])) %>%
-        mutate(
-          score = as.numeric(as.character(.data[[v]]))
-        ) %>%
-        group_by(score) %>%
-        summarise(
-          weighted_n = sum(weight, na.rm = TRUE),
-          .groups = "drop"
-        )
+  score_distributions <- lapply(score_vars, function(v) {
 
-      temp <- merge(
-        data.frame(score = 1:5),
-        temp,
-        by = "score",
-        all.x = TRUE
+    temp <- df %>%
+      filter(!is.na(.data[[v]])) %>%
+      mutate(
+        score = as.numeric(as.character(.data[[v]]))
+      ) %>%
+      group_by(score) %>%
+      summarise(
+        weighted_n = sum(weight, na.rm = TRUE),
+        .groups = "drop"
       )
 
-      temp$weighted_n[is.na(temp$weighted_n)] <- 0
+    temp <- merge(
+      data.frame(score = 1:5),
+      temp,
+      by = "score",
+      all.x = TRUE
+    )
 
+    temp$weighted_n[is.na(temp$weighted_n)] <- 0
+
+    total_weight <- sum(temp$weighted_n)
+
+    temp <- temp %>%
+  mutate(
+    score = as.character(score),
+    weighted_pct = round(
+      100 * weighted_n / total_weight,
+      1
+    ),
+    variable = v
+  )
+
+    # Need and severe need summary rows
+
+    summary_rows <- data.frame(
+      variable = v,
+      score = c("need", "severe_need"),
+      weighted_n = c(
+        sum(temp$weighted_n[temp$score %in% c(3, 4, 5)]),
+        sum(temp$weighted_n[temp$score %in% c(4, 5)])
+      ),
+      weighted_pct = c(
+        round(
+          100 * sum(temp$weighted_n[temp$score %in% c(3, 4, 5)]) /
+            total_weight,
+          1
+        ),
+        round(
+          100 * sum(temp$weighted_n[temp$score %in% c(4, 5)]) /
+            total_weight,
+          1
+        )
+      )
+    )
+
+    bind_rows(
       temp %>%
-        mutate(
-          weighted_pct = round(
-            100 * weighted_n / sum(weighted_n),
-            1
-          ),
-          variable = v
-        ) %>%
         select(
           variable,
           score,
           weighted_n,
           weighted_pct
-        )
+        ),
+      summary_rows
+    )
 
-    }) %>%
-      bind_rows()
+  }) %>%
+    bind_rows()
 
-  }
-  
+}
+
   # Population group
 
   if (!is.null(pop_group_var) &&
@@ -461,6 +494,131 @@ results <- setNames(
   names(configs)
 )
 
+# Extract top 3 needs and severe needs scores
+
+excluded_scores <- c(
+  "comp_prot_score_prot_needs_1_services",
+  "comp_prot_score_prot_needs_1_justice",
+  "comp_prot_score_prot_needs_2_activities",
+  "comp_prot_score_prot_needs_2_social",
+  "comp_prot_score_prot_needs_3",
+  "comp_foodsec_score",
+  "comp_wash_score",
+  "comp_edu_score",
+  "comp_prot_score",
+  "comp_health_score",
+  "comp_snfi_score",
+  "msni_score"
+)
+
+score_rankings <- bind_rows(
+
+  lapply(names(results), function(country) {
+
+    scores <- results[[country]]$score_distributions
+
+    if (is.null(scores)) return(NULL)
+
+    # Top 3 in need
+    need_top3 <- scores %>%
+      filter(
+        score == "need",
+        !variable %in% excluded_scores
+      ) %>%
+      arrange(desc(weighted_pct)) %>%
+      slice_head(n = 3)
+
+    # Top 3 severe need
+    severe_top3 <- scores %>%
+      filter(
+        score == "severe_need",
+        !variable %in% excluded_scores
+      ) %>%
+      arrange(desc(weighted_pct)) %>%
+      slice_head(n = 3)
+
+    data.frame(data.frame(
+
+      country = country,
+
+      top1_need = ifelse(
+        nrow(need_top3) >= 1,
+        need_top3$variable[1],
+        NA
+      ),
+
+      top1_need_pct = ifelse(
+        nrow(need_top3) >= 1,
+        need_top3$weighted_pct[1],
+        NA
+      ),
+
+      top2_need = ifelse(
+        nrow(need_top3) >= 2,
+        need_top3$variable[2],
+        NA
+      ),
+
+      top2_need_pct = ifelse(
+        nrow(need_top3) >= 2,
+        need_top3$weighted_pct[2],
+        NA
+      ),
+
+      top3_need = ifelse(
+        nrow(need_top3) >= 3,
+        need_top3$variable[3],
+        NA
+      ),
+      
+      top3_need_pct = ifelse(
+        nrow(need_top3) >= 3,
+        need_top3$weighted_pct[3],
+        NA
+      ),
+
+      top1_severe_need = ifelse(
+        nrow(severe_top3) >= 1,
+        severe_top3$variable[1],
+        NA
+      ),
+
+      top1_severe_need_pct = ifelse(
+        nrow(severe_top3) >= 1,
+        severe_top3$weighted_pct[1],
+        NA
+      ),
+ 
+      top2_severe_need = ifelse(
+        nrow(severe_top3) >= 2,
+        severe_top3$variable[2],
+        NA
+      ),
+
+      top2_severe_need_pct = ifelse(
+        nrow(severe_top3) >= 2,
+        severe_top3$weighted_pct[2],
+        NA
+      ),
+      
+      top3_severe_need = ifelse(
+        nrow(severe_top3) >= 3,
+        severe_top3$variable[3],
+        NA
+      ),
+
+      top3_severe_need_pct = ifelse(
+        nrow(severe_top3) >= 3,
+        severe_top3$weighted_pct[3],
+        NA
+      )
+      
+    ))
+
+  })
+
+)
+
 # Generate a summary table
 
 summary_table <- bind_rows(
@@ -471,7 +629,11 @@ summary_table <- bind_rows(
 
   })
 ) %>%
-  select(country, everything())
+  select(country, everything()) %>%
+  left_join(
+    score_rankings,
+    by = "country"
+  )
 
   summary_table 
 
