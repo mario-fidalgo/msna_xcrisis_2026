@@ -37,6 +37,25 @@ global_indicators <- function(
 df <- df %>%
   mutate(weight = .data[[weight_var]])
 
+# Recode fsl phases to numeric
+  
+fsl_phase_vars <- c(
+  "fsl_fc_phase",
+  "fclcm_phase"
+)
+
+for (v in fsl_phase_vars) {
+
+  if (v %in% names(df)) {
+
+    df[[v]] <- as.numeric(
+      gsub("[^0-9]", "", df[[v]])
+    )
+
+  }
+
+}
+
 # Recode admin1 var
 
 if (!is.null(admin1_pcode_var) &&
@@ -502,13 +521,16 @@ excluded_scores <- c(
   "comp_prot_score_prot_needs_2_activities",
   "comp_prot_score_prot_needs_2_social",
   "comp_prot_score_prot_needs_3",
+  "fsl_fcs_score",
+  "fsl_rcsi_score",
+  "fsl_hhs_score",
   "comp_foodsec_score",
   "comp_wash_score",
   "comp_edu_score",
   "comp_prot_score",
   "comp_health_score",
   "comp_snfi_score",
-  "msni_score"
+  "msni_score",
 )
 
 score_rankings <- bind_rows(
