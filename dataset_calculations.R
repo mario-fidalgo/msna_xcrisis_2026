@@ -56,6 +56,23 @@ for (v in fsl_phase_vars) {
 
 }
 
+# Recode hwise4 (0 to 12) to severity score (1 to 5)
+  
+  if ("wash_hwise4_score" %in% names(df)) {
+
+  df <- df %>%
+    mutate(
+      wash_hwise4_score = case_when(
+        wash_hwise4_score >= 0  & wash_hwise4_score <= 3  ~ 1,
+        wash_hwise4_score >= 4  & wash_hwise4_score <= 6  ~ 2,
+        wash_hwise4_score >= 7  & wash_hwise4_score <= 8  ~ 3,
+        wash_hwise4_score >= 9  & wash_hwise4_score <= 10 ~ 4,
+        wash_hwise4_score >= 11 & wash_hwise4_score <= 12 ~ 5,
+        TRUE ~ NA_real_
+      )
+    )
+}
+  
 # Recode admin1 var
 
 if (!is.null(admin1_pcode_var) &&
@@ -530,7 +547,7 @@ excluded_scores <- c(
   "comp_prot_score",
   "comp_health_score",
   "comp_snfi_score",
-  "msni_score",
+  "msni_score"
 )
 
 score_rankings <- bind_rows(
