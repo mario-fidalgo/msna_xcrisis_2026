@@ -720,6 +720,52 @@ summary_table <- bind_rows(
     by = "country"
   )
 
+## Convert to data table counting dimensions appearing in need ----------------
+
+heatmap_data <- bind_rows(...) %>%
+  filter(!is.na(dimension))
+
+# Recode labels
+heatmap_data <- heatmap_data %>%
+  mutate(
+    dimension = recode(...)
+  )
+
+# Order dimensions
+
+dimension_order <- heatmap_data %>%
+  count(dimension, sort = TRUE) %>%
+  pull(dimension)
+
+heatmap_data <- heatmap_data %>%
+  mutate(
+    dimension = factor(
+      dimension,
+      levels = rev(dimension_order)
+    )
+  )
+
+# Summarize the data by dimension
+
+driver_data <- summary_table %>%
+  select(
+    country,
+    top1_need,
+    top2_need,
+    top3_need
+  ) %>%
+  pivot_longer(
+    cols = starts_with("top"),
+    names_to = "rank",
+    values_to = "dimension"
+  ) %>%
+  filter(!is.na(dimension))
+
+# Count the number of appearances
+
+driver_counts <- driver_data %>%
+  count(dimension, sort = TRUE)
+
 ## Convert to data table counting dimensions appearing in severe need ---------
 
 heatmap_data <- bind_rows(
