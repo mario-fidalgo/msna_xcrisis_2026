@@ -7,6 +7,7 @@ setwd("C:/Users/MarioFIDALGO/ACTED/IMPACT HQ-Progs Res Comms - Documents/RS Unit
 # Load packages
 
 library(dplyr)
+library(tidyr)
 library(openxlsx)
 
 # Store data as list
@@ -513,6 +514,61 @@ results <- setNames(
   names(configs)
 )
 
+# Create heatmap data ---------------------------------------------------------
+
+heatmap_data <- bind_rows(
+
+  lapply(names(results), function(country) {
+
+    scores <- results[[country]]$score_distributions
+
+    if (is.null(scores)) return(NULL)
+
+    scores %>%
+      filter(
+        score == "severe_need"
+      ) %>%
+      mutate(
+        country = country
+      ) %>%
+      select(
+        country,
+        variable,
+        weighted_pct
+      )
+
+  })
+
+)
+
+heatmap_data <- heatmap_data %>%
+  filter(
+    !variable %in% c(
+      "comp_prot_score_prot_needs_1_services",
+      "comp_prot_score_prot_needs_1_justice",
+      "comp_prot_score_prot_needs_2_activities",
+      "comp_prot_score_prot_needs_2_social",
+      "comp_prot_score_prot_needs_3",
+      "fsl_fcs_score",
+      "fsl_rcsi_score",
+      "fsl_hhs_score",
+      "comp_wash_score_camp_formal",
+      "comp_wash_score_camp_informal",
+      "comp_wash_score_urban",
+      "comp_wash_score_rural",
+      "wash_hwise4_score",
+      "hwise4_score",
+      "mddw_score",
+      "comp_foodsec_score",
+      "comp_wash_score",
+      "comp_edu_score",
+      "comp_prot_score",
+      "comp_health_score",
+      "comp_snfi_score",
+      "msni_score"
+    )
+  )
+
 # Extract top 3 needs and severe needs scores
 
 excluded_scores <- c(
@@ -524,7 +580,13 @@ excluded_scores <- c(
   "fsl_fcs_score",
   "fsl_rcsi_score",
   "fsl_hhs_score",
+  "comp_wash_score_camp_formal",
+  "comp_wash_score_camp_informal",
+  "comp_wash_score_urban",
+  "comp_wash_score_rural",
   "wash_hwise4_score",
+  "hwise4_score",
+  "mddw_score",
   "comp_foodsec_score",
   "comp_wash_score",
   "comp_edu_score",
@@ -658,6 +720,57 @@ summary_table <- bind_rows(
     by = "country"
   )
 
-  summary_table 
+## Convert to data table counting dimensions appearing in severe need ---------
+
+heatmap_data <- bind_rows(
+
+  summary_table %>%
+    transmute(
+      country,
+      rank = "Top 1",
+      dimension = top1_severe_need,
+      pct = top1_severe_need_pct
+    ),
+
+  summary_table %>%
+    transmute(
+      country,
+      rank = "Top 2",
+      dimension = top2_severe_need,
+      pct = top2_severe_need_pct
+    ),
+
+  summary_table %>%
+    transmute(
+      country,
+      rank = "Top 3",
+      dimension = top3_severe_need,
+      pct = top3_severe_need_pct
+    )
+
+) %>%
+  filter(!is.na(dimension))
+
+# Summarize the data by dimension
+
+driver_data <- summary_table %>%
+  select(
+    country,
+    top1_severe_need,
+    top2_severe_need,
+    top3_severe_need
+  ) %>%
+  pivot_longer(
+    cols = starts_with("top"),
+    names_to = "rank",
+    values_to = "dimension"
+  ) %>%
+  filter(!is.na(dimension))
+
+# Count the number of appearances
+
+driver_counts <- driver_data %>%
+  count(dimension, sort = TRUE)
+
 
   # write.csv(summary_table, "C:/Users/MarioFIDALGO/ACTED/IMPACT HQ-Progs Res Comms - Documents/RS Unit/4- Programs/1- MSNA/3- R&D/Cross-crisis/08. X crisis 26/msni_global_indicators.csv")
