@@ -21,7 +21,10 @@ datasets <- list(
   mli = read.xlsx("MLI2601.xlsx", sheet = "main_dataset"),
   ven = read.xlsx("VEN2601_unvalidated.xlsx", sheet = "hh_indicadores"),
   ukr = read.xlsx("UKR2609.xlsx", sheet = "main"),
-  drc = read.xlsx("DRC2603.xlsx", sheet = "main")
+  drc = read.xlsx("DRC2603.xlsx", sheet = "main"),
+  opt_wb = read.xlsx("OPT2026b.xlsx", sheet = "hh_clean_data"),
+  opt_gaza = read.xlsx("OPT2026a.xlsx", "hh_clean_data"),
+  nga = read.xlsx("NGA2605_2SCS.xlsx", sheet = "msni_hh")
 )
 
 ## Function to iterate over list of countries
@@ -494,8 +497,39 @@ configs <- list(
     pop_group_var = NULL,
     gender_var = "hoh_gender",
     admin1_pcode_var = "admin1_pcode"
-)
+),
 
+  OPT_WB = list(
+    data = datasets$opt_wb,
+    weight_var = "weight",
+    pop_group_var = NULL,
+    gender_var = "hoh_gender_clean",
+    admin1_pcode_var = "admin1"
+  ),
+
+  OPT_Gaza = list(
+    data = datasets$opt_gaza,
+    weight_var = "weight",
+    pop_group_var = NULL,
+    gender_var = "hoh_gender_clean",
+    admin1_pcode_var = NULL
+  ),
+
+  NGA = list(
+    data = datasets$nga,
+    weight_var = "weight",
+    pop_group_var = "d_pop_group",
+    gender_var = "d_hoh_gender",
+    admin1_pcode_var = "admin1"
+  ),
+
+  DRC = list(
+    data = datasets$drc,
+    weight_var = "weights",
+    pop_group_var = NULL,
+    gender_var = "hoh_gender_final",
+    admin1_pcode_var = "admin1"
+  )
 )
 
 # Run
