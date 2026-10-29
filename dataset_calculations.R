@@ -24,7 +24,8 @@ datasets <- list(
   drc = read.xlsx("DRC2603.xlsx", sheet = "main"),
   opt_wb = read.xlsx("OPT2026b.xlsx", sheet = "hh_clean_data"),
   opt_gaza = read.xlsx("OPT2026a.xlsx", "hh_clean_data"),
-  nga = read.xlsx("NGA2605_2SCS.xlsx", sheet = "msni_hh")
+  nga = read.xlsx("NGA2605_2SCS.xlsx", sheet = "msni_hh"),
+  ken = read.xlsx("KEN2601.xlsx")
 )
 
 ## Function to iterate over list of countries
@@ -528,6 +529,14 @@ configs <- list(
     weight_var = "weights",
     pop_group_var = NULL,
     gender_var = "hoh_gender_final",
+    admin1_pcode_var = "admin1"
+  ),
+
+  KEN = list(
+    data = datasets$ken,
+    weight_var = "weights",
+    pop_group_var = "pop_group",
+    gender_var = "hoh_gender_main",
     admin1_pcode_var = "admin1"
   )
 )
