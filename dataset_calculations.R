@@ -173,6 +173,24 @@ if (length(severe_sector_props) == 0 || all(is.na(severe_sector_props))) {
       ),
       1
     ),
+    
+    pct_msni_need = round(
+      100 * weighted.mean(
+        df$msni_in_need,
+        df$weight,
+        na.rm = TRUE
+      ),
+      1
+    ),
+
+    pct_msni_severe = round(
+      100 * weighted.mean(
+        df$msni_in_severe_need,
+        df$weight,
+        na.rm = TRUE
+      ),
+      1
+    ),
 
     avg_msni = round(
       weighted.mean(
@@ -199,15 +217,6 @@ if (length(severe_sector_props) == 0 || all(is.na(severe_sector_props))) {
         na.rm = TRUE
       ),
       2
-    ),
-
-    pct_msni_severe = round(
-      100 * weighted.mean(
-        df$msni_in_severe_need,
-        df$weight,
-        na.rm = TRUE
-      ),
-      1
     )
   )
 
