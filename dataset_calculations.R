@@ -16,7 +16,7 @@ datasets <- list(
   car = read.xlsx("CAR2602.xlsx"),
   cmr = read.xlsx("CMR2601.xlsx", sheet = "main_dataset"),
   ner = read.xlsx("NER2601.xlsx", sheet = "main_dataset"),
-  mmr = read.xlsx("MMR2602.xlsx", sheet = "msni_main"),
+  mmr = read.xlsx("MMR2602.xlsx", sheet = "hh_clean_data"),
   hti = read.xlsx("HTI2601.xlsx", sheet = "hh_clean_data"),
   mli = read.xlsx("MLI2601.xlsx", sheet = "main_dataset"),
   ven = read.xlsx("VEN2601_unvalidated.xlsx", sheet = "hh_indicadores"),
@@ -37,13 +37,44 @@ global_indicators <- function(
     weight_var,
     pop_group_var,
     gender_var,
+    age_var,
     admin1_pcode_var = NULL
 ) {
 
 # Standardize weight column
 
 df <- df %>%
-  mutate(weight = .data[[weight_var]])
+  mutate(
+    weight = as.numeric(.data[[weight_var]])
+  )
+  
+# Recode HH disability status
+
+disability_vars <- names(df)[
+  grepl("^wgq_dis", names(df)) &
+    grepl("at_least_one$", names(df))
+]
+
+if (length(disability_vars) > 0) {
+
+  df <- df %>%
+    mutate(
+      hh_disability = if_else(
+        rowSums(across(all_of(disability_vars)) == 1,
+                na.rm = TRUE) > 0,
+        "Disability",
+        "No disability"
+      )
+    )
+
+} else {
+
+  df <- df %>%
+    mutate(
+      hh_disability = NA_character_
+    )
+
+}
 
 # Recode fsl phases to numeric
   
@@ -397,7 +428,66 @@ if (!is.null(gender_var) &&
 
 }
   
-  # Admin-1
+# Age
+  
+if (!is.null(age_var) &&
+    age_var %in% names(df)) {
+
+  age <- df %>%
+    filter(
+      !is.na(.data[[age_var]]),
+      !is.na(msni_in_severe_need)
+    ) %>%
+    group_by(group = .data[[age_var]]) %>%
+    summarise(
+      pct_severe = round(
+        100 * weighted.mean(
+          msni_in_severe_need,
+          weight,
+          na.rm = TRUE
+        ),
+        1
+      ),
+      .groups = "drop"
+    ) %>%
+    arrange(desc(pct_severe))
+
+} else {
+
+  age <- NULL
+
+}
+  
+# Disability
+  
+if ("hh_disability" %in% names(df)) {
+
+  disability <- df %>%
+    filter(
+      !is.na(hh_disability),
+      !is.na(msni_in_severe_need)
+    ) %>%
+    group_by(hh_disability) %>%
+    summarise(
+      pct_severe = round(
+        100 * weighted.mean(
+          msni_in_severe_need,
+          weight,
+          na.rm = TRUE
+        ),
+        1
+      ),
+      .groups = "drop"
+    ) %>%
+    arrange(desc(pct_severe))
+
+} else {
+
+  disability <- NULL
+
+}
+  
+# Admin-1
 
 if (!is.null(admin1_pcode_var) &&
     admin1_pcode_var %in% names(df)) {
@@ -436,6 +526,8 @@ list(
   score_distributions = score_distributions,
   pop_group = pop_group,
   gender = gender,
+  age = age,
+  disability = disability,
   admin1 = admin1
 )
 
@@ -452,6 +544,7 @@ configs <- list(
     weight_var = "weights",
     pop_group_var = "pop_group",
     gender_var = "hoh_gender_final",
+    age_var = "hoh_age_cat",
     admin1_pcode_var = "admin1"
   ),
 
@@ -460,6 +553,7 @@ configs <- list(
     weight_var = "weight_admin2",
     pop_group_var = "PoI",
     gender_var = "hoh_gender_final",
+    age_var = "hoh_age_final_cat",
     admin1_pcode_var = "Admin_1"
   ),
 
@@ -468,6 +562,7 @@ configs <- list(
     weight_var = "weights",
     pop_group_var = "PoI",
     gender_var = "hoh_gender_final",
+    age_var = "hoh_age_cat",
     admin1_pcode_var = "Admin_1"
   ),
 
@@ -475,8 +570,9 @@ configs <- list(
     data = datasets$mmr,
     weight_var = "weight_final",
     pop_group_var = "pop_group",
-    gender_var = "hoh_gender_final",
-    admin1_pcode_var = NULL # Not in the data
+    gender_var = "hoh_gender_updated",
+    age_var = "hoh_age_cat",
+    admin1_pcode_var = "admin1"
   ),
 
   HTI = list(
@@ -484,38 +580,43 @@ configs <- list(
     weight_var = "weight",
     pop_group_var = "pop_group",
     gender_var = "hoh_gender",
+    age_var = "hoh_age", # No cat in the src
     admin1_pcode_var = "admin1"
-),
+  ),
 
   MLI = list(
     data = datasets$mli,
     weight_var = "weights",
     pop_group_var = "PoI",
     gender_var = "hoh_gender",
+    age_var = "hoh_age_final_cat",
     admin1_pcode_var = "Admin_1"
-),
+  ),
 
   VEN = list(
     data = datasets$ven,
     weight_var = "weight",
     pop_group_var = "pop_group",
     gender_var = "hoh_gender",
+    age_var = "hoh_age", # No cat in the src
     admin1_pcode_var = "admin1"
-),
+  ),
 
   UKR = list(
     data = datasets$ukr,
     weight_var = "weight",
     pop_group_var = NULL,
     gender_var = "hoh_gender",
+    age_var = "hoh_age", # No cat in the src
     admin1_pcode_var = "admin1_pcode"
-),
+  ),
 
   OPT_WB = list(
     data = datasets$opt_wb,
     weight_var = "weight",
     pop_group_var = NULL,
     gender_var = "hoh_gender_clean",
+    age_var = "hoh_age_cat",
     admin1_pcode_var = "admin1"
   ),
 
@@ -524,6 +625,7 @@ configs <- list(
     weight_var = "weight",
     pop_group_var = NULL,
     gender_var = "hoh_gender_clean",
+    age_var = "hoh_age_cat",
     admin1_pcode_var = NULL
   ),
 
@@ -532,6 +634,7 @@ configs <- list(
     weight_var = "weight",
     pop_group_var = "d_pop_group",
     gender_var = "d_hoh_gender",
+    age_var = NULL,
     admin1_pcode_var = "admin1"
   ),
 
@@ -540,6 +643,7 @@ configs <- list(
     weight_var = "weights",
     pop_group_var = NULL,
     gender_var = "hoh_gender_final",
+    age_var = "hoh_age_cat",
     admin1_pcode_var = "admin1"
   ),
 
@@ -548,6 +652,7 @@ configs <- list(
     weight_var = "weights",
     pop_group_var = "pop_group",
     gender_var = "hoh_gender_main",
+    age_var = "hoh_age_cat",
     admin1_pcode_var = "admin1"
   ),
 
@@ -556,6 +661,7 @@ AFG = list(
     weight_var = "weights",
     pop_group_var = "pop_group_init",
     gender_var = "hoh_gender",
+    age_var = "hoh_age_cat",
     admin1_pcode_var = "admin1"
   )
 
@@ -564,13 +670,18 @@ AFG = list(
 # Run
 
 results <- setNames(
-  lapply(configs, function(x) {
+  lapply(names(configs), function(country) {
+
+    cat("\nRunning:", country, "\n")
+
+    x <- configs[[country]]
 
     global_indicators(
       df = x$data,
       weight_var = x$weight_var,
       pop_group_var = x$pop_group_var,
       gender_var = x$gender_var,
+      age_var = x$age_var,
       admin1_pcode_var = x$admin1_pcode_var
     )
 
