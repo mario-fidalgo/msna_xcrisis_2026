@@ -288,8 +288,6 @@ if (length(severe_sector_props) == 0 || all(is.na(severe_sector_props))) {
 
   # Score distributions
 
-  # Score distributions
-
 score_vars <- names(df)[grepl("score", names(df), ignore.case = TRUE)]
 
 score_distributions <- NULL
@@ -1003,5 +1001,28 @@ driver_data <- summary_table %>%
 driver_counts <- driver_data %>%
   count(dimension, sort = TRUE)
 
+## Draft input data for mapping - admin1 maps by severe need ------------------
+
+# Combine all admin1 results table
+
+admin1_severe <- imap_dfr(
+  results,
+  function(x, country) {
+
+    if (is.null(x$admin1) ||
+        !inherits(x$admin1, "data.frame") ||
+        nrow(x$admin1) == 0) {
+      message(country, ": skipped")
+      return(NULL)
+    }
+
+    x$admin1 %>%
+      mutate(country = country)
+  }
+) # Gaza has no admin1 column, need to do manually by area
+
+# Export to .csv
+
+admin1_severe |> write.csv("admin1_severe.csv")
 
   # write.csv(summary_table, "C:/Users/MarioFIDALGO/ACTED/IMPACT HQ-Progs Res Comms - Documents/RS Unit/4- Programs/1- MSNA/3- R&D/Cross-crisis/08. X crisis 26/msni_global_indicators.csv")
