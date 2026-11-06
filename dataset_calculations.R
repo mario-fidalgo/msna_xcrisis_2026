@@ -17,19 +17,19 @@ datasets <- list(
   cmr = read.xlsx("CMR2601.xlsx", sheet = "main_dataset"),
   ner = read.xlsx("NER2601.xlsx", sheet = "main_dataset"),
   mmr = read.xlsx("MMR2602.xlsx", sheet = "hh_clean_data"),
-  hti = read.xlsx("HTI2601.xlsx", sheet = "hh_clean_data"),
+  hti = read.xlsx("REACH_HTI_Dataset_MSNA_2026_September.xlsx", sheet = "hh_clean_data"),
   mli = read.xlsx("MLI2601.xlsx", sheet = "main_dataset"),
-  ven = read.xlsx("VEN2601_unvalidated.xlsx", sheet = "hh_indicadores"),
-  ukr = read.xlsx("UKR2609.xlsx", sheet = "main"),
-  drc = read.xlsx("DRC2603.xlsx", sheet = "main"),
+  ven = read.xlsx("VEN2601.xlsx", sheet = "hh_indicadores"),
+  ukr = read.xlsx("UKR2609.xlsx", sheet = "hh_clean_data"),
+  drc = read.xlsx("DRC2603_20261106.xlsx", sheet = "main"),
   opt_wb = read.xlsx("OPT2026b.xlsx", sheet = "hh_clean_data"),
   opt_gaza = read.xlsx("OPT2026a.xlsx", "hh_clean_data"),
-  nga = read.xlsx("NGA2605_2SCS.xlsx", sheet = "msni_hh"),
+  nga = read.xlsx("IMPACT_NGA_Data_Analysis_MSNI_October-2026.xlsx", sheet = "msni_hh"),
   ken = read.xlsx("KEN2601.xlsx"),
   afg = read.csv("AFG_WoA_annual_2026_data_recoded_weighted_msni.csv"),
-  lbn = read.xlsx("LBN2602.xlsx", sheet = "msni_2026_lbn_v6"),
-  som = read.xlsx("SOM2605.xlsx", sheet = "main")
-  # missing UGA only
+  lbn = read.xlsx("msni_2026_lbn_v10.xlsx"),
+  som = read.xlsx("SOM2605.xlsx", sheet = "main"),
+  uga = read.xlsx("UGA2603.xlsx")
 )
 
 ## Function to iterate over list of countries
@@ -631,7 +631,7 @@ configs <- list(
 
   NGA = list(
     data = datasets$nga,
-    weight_var = "weight",
+    weight_var = "weights",
     pop_group_var = "d_pop_group",
     gender_var = "d_hoh_gender",
     age_var = NULL,
@@ -680,6 +680,15 @@ AFG = list(
     pop_group_var = "pop_group",
     gender_var = "hoh_gender_main",
     age_var = "hoh_age_cat",
+    admin1_pcode_var = "admin1"
+  ),
+
+  UGA = list(
+    data = datasets$uga,
+    weight_var = "weights",
+    pop_group_var = "pop_group",
+    gender_var = "hoh_gender",
+    age_var = "hoh_age",
     admin1_pcode_var = "admin1"
   )
 
